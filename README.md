@@ -25,9 +25,10 @@ ensure tilp-hdrp-collectablecards
 # Installation:
 - ensure that the dependancies are added and started your resources folder
 
-- add img in [inventory](https://github.com/TankieTwitch/FREE-RedM-Image-Library/tree/main/images/%5Bcollector-items%5D/%5Bcigarette-cards%5D) 
-- add items in shared/items.lua
-- add img in someone script book
+# Install folder:
+- add contents of images folder to: rsg-inventory>html>images folder
+- copy / paste items in shared_items.lua to rsg-core>shared>items.lua
+
 
 If anyone wants to help finish it, it's almost ready xD
 
