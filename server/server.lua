@@ -430,6 +430,14 @@ end)
 ---------------
 
 local cardsCollectObtained = {}
+local savingPlayers = {}
+
+local function safeAddCard(src, card)
+    if not cardsCollectObtained[src] then
+        cardsCollectObtained[src] = {}
+    end
+    cardsCollectObtained[src][card] = true
+end
 
 local function checkAllCardsAndDecksObtained(playerId)
     if playerId then
@@ -475,9 +483,9 @@ AddEventHandler('tilp-hdrp-collectablecards:server:getCollect', function(card)
     TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_lang_11').. ' 1 x '..RSGCore.Shared.Items[card].label, type = 'inform', duration = 5000 })
 
     local citizenid = Player.PlayerData.citizenid
-    cardsCollectObtained[src][card] = true
+    safeAddCard(src, card)
 
-    local allCardsObtained = checkAllCardsAndDecksObtained(citizenid)
+    local allCardsObtained = checkAllCardsAndDecksObtained(src)
 
     if allCardsObtained then
         TriggerClientEvent('ox_lib:notify', src, { title = locale('sv_lang_12'),  description = locale('sv_lang_13'), type = 'inform', icon = 'fa-solid fa-check-circle', duration = 7000 })
@@ -498,15 +506,14 @@ AddEventHandler('rsg-core:server:PlayerLoaded', function(playerId)
     
     cardsCollectObtained[playerId] = {}
     
-    local result = MySQL.query.await('SELECT collected_cards FROM player_card_collections WHERE citizenid = ?', {
+    local success, result = pcall(MySQL.query.await, 'SELECT collected_cards FROM player_card_collections WHERE citizenid = ?', {
         Player.PlayerData.citizenid
     })
     
-    if result[1] and result[1].collected_cards then
+    if success and result and result[1] and result[1].collected_cards then
         cardsCollectObtained[playerId] = json.decode(result[1].collected_cards) or {}
-    end
-    for _, card in ipairs(cards) do
-        cardsCollectObtained[playerId][card] = false
+    elseif not success then
+        print("Error loading player cards: " .. tostring(result))
     end
 end)
 
@@ -541,11 +548,19 @@ AddEventHandler('playerDropped', function()
     local playerId = source
     local Player = RSGCore.Functions.GetPlayer(playerId)
     
-    if Player and cardsCollectObtained[playerId] then
-        MySQL.query('INSERT INTO player_card_collections (citizenid, collected_cards) VALUES (?, ?) ON DUPLICATE KEY UPDATE collected_cards = VALUES(collected_cards)', {
+    if Player and cardsCollectObtained[playerId] and not savingPlayers[playerId] then
+        savingPlayers[playerId] = true
+        
+        local success, result = pcall(MySQL.query, 'INSERT INTO player_card_collections (citizenid, collected_cards) VALUES (?, ?) ON DUPLICATE KEY UPDATE collected_cards = VALUES(collected_cards)', {
             Player.PlayerData.citizenid,
             json.encode(cardsCollectObtained[playerId])
         })
+        
+        if not success then
+            print("Error saving player cards: " .. tostring(result))
+        end
+        
+        savingPlayers[playerId] = nil
     end
     
     if cardsCollectObtained[playerId] then

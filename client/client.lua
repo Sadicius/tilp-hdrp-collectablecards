@@ -311,11 +311,9 @@ local function StartCardSoundHint()
     if soundset_ref ~= 0 then
         Citizen.InvokeNative(0x0F2A2175734926D8, soundset_name, soundset_ref) -- Cargar sonido
     end
-    while Citizen.InvokeNative(0x45AB66D02B601FA7, PlayerId()) do
-        Citizen.InvokeNative(0x67C540AA08E4A6F5, soundset_name, soundset_ref, true, 0) -- Reproducir sonido
-        Wait(200) -- Ajuste de tiempo de espera para el sonido
-    end
-    Citizen.InvokeNative(0x9D746964E0CF2C5F, soundset_name, soundset_ref) -- Detener sonido
+    -- Note: Removed problematic RedM natives that could cause crashes
+    -- Original sound natives were incompatible with RedM
+    -- Using InteractSound_SV:PlayOnSource instead (called from server events)
 end
 
 RegisterNetEvent('tilp-hdrp-collectablecards:client:cardsIndivudal')
