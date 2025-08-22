@@ -1,13 +1,10 @@
 Config = {}
 
--- shop settings
-Config = {
-    CardsShopItems = {
-		{ name = 'card_packge_cards', amount = 1, price = 5.0 },
-		{ name = 'card_storage_box',  amount = 1, price = 50.0 }
-    },
-    PersistStock = true, --should stock save in database and load it after restart, to 'remember' stock value before restart
+Config.CardsShopItems = {
+    { name = 'card_packge_cards', amount = 1, price = 5.0 },
+    { name = 'card_storage_box',  amount = 1, price = 50.0 }
 }
+Config.PersistStock = true
 
 -- require
 Config.Debug = false
@@ -126,8 +123,8 @@ Config.CardMission = {
     {   id 			= 'CardshopCollect7',
 		name 		= 'Search Card',
 		coords 		= vector3(-1760.74, -430.08, 155.23),
-		model 		= `a_f_m_sdfancywhore_01`,
-		coords2 	= vector4(-1760.74, -430.08, 155.23, 141.4),
+		npcmodel 	= `a_f_m_sdfancywhore_01`,
+		npccoords 	= vector4(-1760.74, -430.08, 155.23, 141.4),
     },
 	-- DECK CARDS
     { 	id 			= 'CardshopCollect8',

@@ -320,6 +320,10 @@ end
 
 RegisterNetEvent('tilp-hdrp-collectablecards:client:cardsIndivudal')
 AddEventHandler('tilp-hdrp-collectablecards:client:cardsIndivudal', function(card, cardmodel, type)
+    if not card or not cardmodel or card == "" or cardmodel == "" then
+        return
+    end
+    
     if GetVehiclePedIsIn(cache.ped, false) ~= 0 then
         lib.notify({ title = locale('cl_error_7'), description = locale('cl_error_8'), type = 'error', duration = 7000 })
         return
@@ -397,11 +401,13 @@ end)
 
 RegisterNetEvent('RSGCore:Client:OnPlayerUnload', function()
     PlayerData = {}
+    playerCooldowns = {}
 end)
 
 AddEventHandler('onResourceStop', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
     SetNuiFocus(false, false)
+    
     for k, v in pairs(spawnedProps) do
         if v.prop then
             SetEntityAsMissionEntity(v.prop, false)
@@ -410,15 +416,18 @@ AddEventHandler('onResourceStop', function(resourceName)
         end
         spawnedProps[k] = nil
     end
+    
     for k, v in pairs(GroundBoxs) do
         if v.prop then
             SetEntityAsMissionEntity(v.prop, false)
             FreezeEntityPosition(v.prop, false)
             DeleteObject(v.prop)
         end
-        GroundBoxs[k] = nil  -- Eliminar de la tabla
+        GroundBoxs[k] = nil
     end
 
+    playerCooldowns = {}
     ClearPedTasks(cache.ped)
     isBusy = false
+    isObjectActive = false
 end)

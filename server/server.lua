@@ -22,6 +22,13 @@ else
     if Config.Debug then print(locale('sv_print_2')) end
 end
 
+MySQL.query([[CREATE TABLE IF NOT EXISTS `player_card_collections` (
+    `citizenid` varchar(50) NOT NULL,
+    `collected_cards` longtext DEFAULT NULL,
+    `updated_at` timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`citizenid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4]])
+
 --------
 -- INVENTORY BOX
 ----------------
@@ -468,7 +475,7 @@ AddEventHandler('tilp-hdrp-collectablecards:server:getCollect', function(card)
     TriggerClientEvent('ox_lib:notify', src, {title = locale('sv_lang_11').. ' 1 x '..RSGCore.Shared.Items[card].label, type = 'inform', duration = 5000 })
 
     local citizenid = Player.PlayerData.citizenid
-    cardsCollectObtained[card] = true
+    cardsCollectObtained[src][card] = true
 
     local allCardsObtained = checkAllCardsAndDecksObtained(citizenid)
 
@@ -485,8 +492,19 @@ AddEventHandler('tilp-hdrp-collectablecards:server:getCollect', function(card)
     end
 end)
 
-AddEventHandler('rsg-core:server:PlayerLoaded', function(playerId, cards)
+AddEventHandler('rsg-core:server:PlayerLoaded', function(playerId)
+    local Player = RSGCore.Functions.GetPlayer(playerId)
+    if not Player then return end
+    
     cardsCollectObtained[playerId] = {}
+    
+    local result = MySQL.query.await('SELECT collected_cards FROM player_card_collections WHERE citizenid = ?', {
+        Player.PlayerData.citizenid
+    })
+    
+    if result[1] and result[1].collected_cards then
+        cardsCollectObtained[playerId] = json.decode(result[1].collected_cards) or {}
+    end
     for _, card in ipairs(cards) do
         cardsCollectObtained[playerId][card] = false
     end
@@ -518,3 +536,19 @@ createCardUsableItems(ultraCards)
 createCardUsableItems(vCards)
 createCardUsableItems(vmaxCards)
 createCardUsableItems(rainbowCards)
+
+AddEventHandler('playerDropped', function()
+    local playerId = source
+    local Player = RSGCore.Functions.GetPlayer(playerId)
+    
+    if Player and cardsCollectObtained[playerId] then
+        MySQL.query('INSERT INTO player_card_collections (citizenid, collected_cards) VALUES (?, ?) ON DUPLICATE KEY UPDATE collected_cards = VALUES(collected_cards)', {
+            Player.PlayerData.citizenid,
+            json.encode(cardsCollectObtained[playerId])
+        })
+    end
+    
+    if cardsCollectObtained[playerId] then
+        cardsCollectObtained[playerId] = nil
+    end
+end)

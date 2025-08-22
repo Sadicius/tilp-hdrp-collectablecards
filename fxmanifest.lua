@@ -35,7 +35,8 @@ files {
 
 dependencies {
 	'rsg-core',
-	'ox_lib'
+	'ox_lib',
+	'oxmysql'
 }
 
 escrow_ignore {
